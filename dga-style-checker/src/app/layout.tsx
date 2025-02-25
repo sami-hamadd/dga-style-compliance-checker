@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import '@mantine/core/styles.css';
-import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/core';
-
+import "@mantine/core/styles.css";
+import { ColorSchemeScript, MantineProvider, mantineHtmlProps, createTheme, rem } from "@mantine/core";
+import Header from "@/app/components/Header";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,6 +19,23 @@ export const metadata: Metadata = {
   title: "DGA Style Checker",
   description: "",
 };
+const theme = createTheme({
+  primaryColor: 'dga-color',
+  colors: {
+    'dga-color': [
+      "#f7f0fd",
+      "#e8dff0",
+      "#cfbbde",
+      "#b496cb",
+      "#9d76bc",
+      "#8f62b2",
+      "#8958af",
+      "#76489a",
+      "#69408a",
+      "#5b357a"
+    ]
+  },
+});
 
 export default function RootLayout({
   children,
@@ -30,8 +47,11 @@ export default function RootLayout({
       <head>
         <ColorSchemeScript />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        <MantineProvider>{children}</MantineProvider>
+      <body style={{ backgroundColor: 'rgb(250, 250, 250)' }} className={`${geistSans.variable} ${geistMono.variable}`}>
+        <MantineProvider theme={theme}>
+          <Header />
+          {children}
+        </MantineProvider>
       </body>
     </html>
   );

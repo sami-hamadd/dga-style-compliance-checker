@@ -1,7 +1,8 @@
+//dga-style-checker\src\app\components\InputForm.tsx
 "use client";
 
 import { useState } from "react";
-import { TextInput, Button, Box } from "@mantine/core";
+import { TextInput, Button, Box, Text, Card, Title } from "@mantine/core";
 
 interface InputFormProps {
     onSubmit: (url: string) => void;
@@ -17,16 +18,29 @@ export default function InputForm({ onSubmit }: InputFormProps) {
     };
 
     return (
-        <Box maw={500} mx="auto">
+        <Card
+            shadow="lg"
+            padding="lg"
+            radius="md"
+            style={{
+                maxWidth: "700px",
+                width: "80%",
+            }}
+        >
+            <Title order={2} mb="sm">
+                Enter the website URL:
+            </Title>
             <TextInput
-                label="Enter Website URL"
                 placeholder="https://example.com"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
+                size="md"
             />
-            <Button mt="sm" fullWidth onClick={handleSubmit}>
-                Check Compliance
-            </Button>
-        </Box>
+            <Box mt="md" style={{ display: "flex", justifyContent: "flex-start" }}>
+                <Button onClick={handleSubmit}>
+                    Check Compliance
+                </Button>
+            </Box>
+        </Card>
     );
 }

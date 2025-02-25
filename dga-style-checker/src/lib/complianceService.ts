@@ -2,7 +2,15 @@
 import puppeteer from "puppeteer";
 import { ALLOWED_COLORS, ALLOWED_FONT_PATTERNS } from "@/config";
 
-export async function runComplianceCheck(url: string): Promise<string> {
+export async function runComplianceCheck(url: string): Promise<{
+    modifiedHTML: string;
+    violations: Array<{
+        tagName: string;
+        className: string;
+        textContent: string;
+        violations: Record<string, string>;
+    }>;
+}> {
     console.log(`\n🔍 Checking color and font compliance for: ${url}`);
 
     const browser = await puppeteer.launch({
@@ -109,42 +117,39 @@ export async function runComplianceCheck(url: string): Promise<string> {
     // If violations exist, inject visual highlights into the page
     if (violations.length > 0) {
         await page.evaluate((violations) => {
-            // --- 1) Inject CSS for the tooltip if it hasn't been injected yet ---
             const styleId = 'violation-tooltip-style';
             if (!document.getElementById(styleId)) {
                 const style = document.createElement('style');
                 style.id = styleId;
                 style.innerHTML = `
-                  [data-violation] {
-                    position: relative;
-                    outline: 3px solid red; /* We'll highlight the element with a red outline */
-                  }
-                  /* By default, hide the tooltip pseudo-element */
-                  [data-violation]::after {
-                    content: attr(data-violation);
-                    position: absolute;
-                    bottom: 100%;
-                    left: 0;
-                    background-color: rgba(255, 0, 0, 0.8);
-                    color: #fff;
-                    font-size: 12px;
-                    padding: 2px 4px;
-                    white-space: nowrap;
-                    z-index: 10000;
-                    margin-bottom: 2px;
-                    display: none;
-                  }
-                  /* We only display the tooltip when .show-violation class is added (via JS) */
-                  [data-violation].show-violation::after {
-                    display: block;
-                  }
-                `;
+                [data-violation] {
+                  position: relative;
+                  outline: 3px solid red; /* highlight with a red outline */
+                }
+              `;
                 document.head.appendChild(style);
             }
 
-            // --- 2) Process each violation to add data-violation attribute & text ---
+            // Create the single tooltip element in the DOM (position: fixed).
+            const tooltipId = 'violation-tooltip-element';
+            let tooltipEl = document.getElementById(tooltipId);
+            if (!tooltipEl) {
+                tooltipEl = document.createElement('div');
+                tooltipEl.id = tooltipId;
+                tooltipEl.style.position = 'fixed';
+                tooltipEl.style.display = 'none';
+                tooltipEl.style.backgroundColor = 'rgba(255, 0, 0, 0.8)';
+                tooltipEl.style.color = '#fff';
+                tooltipEl.style.padding = '4px 6px';
+                tooltipEl.style.fontSize = '12px';
+                tooltipEl.style.borderRadius = '4px';
+                tooltipEl.style.pointerEvents = 'none'; // let mouse go “through”
+                tooltipEl.style.zIndex = '999999';      // on top of everything
+                document.body.appendChild(tooltipEl);
+            }
+
+            // Mark elements with data-violation as before
             violations.forEach((v) => {
-                // Build the class selector safely:
                 let classSelector = "";
                 if (v.className !== "no-class") {
                     classSelector = v.className
@@ -154,7 +159,6 @@ export async function runComplianceCheck(url: string): Promise<string> {
                         .join(".");
                 }
                 const selector = classSelector ? `${v.tagName}.${classSelector}` : v.tagName;
-
                 const element = document.querySelector(selector);
                 if (element && element instanceof HTMLElement) {
                     // Set the data attribute with the violation details
@@ -167,27 +171,58 @@ export async function runComplianceCheck(url: string): Promise<string> {
                 }
             });
 
-            // --- 3) Inject JS to handle hover logic so only the innermost is shown ---
+            // Use a single mouseover listener that:
+            // 1) Hides the tooltip by default
+            // 2) Finds the nearest [data-violation] element
+            // 3) Positions the tooltip so it’s visible
             const scriptId = 'violation-tooltip-script';
             if (!document.getElementById(scriptId)) {
                 const script = document.createElement('script');
                 script.id = scriptId;
                 script.textContent = `
+                (function() {
+                  const tooltipEl = document.getElementById('${tooltipId}');
+                  if (!tooltipEl) return;
+          
                   document.addEventListener('mouseover', (event) => {
-                    // Remove .show-violation from all elements first
-                    document.querySelectorAll('[data-violation].show-violation')
-                      .forEach((el) => el.classList.remove('show-violation'));
-                    
-                    // Find the closest [data-violation] from the hovered target
-                    const target = event.target;
-                    if (target instanceof HTMLElement) {
-                      const violationEl = target.closest('[data-violation]');
-                      if (violationEl) {
-                        violationEl.classList.add('show-violation');
-                      }
+                    tooltipEl.style.display = 'none';
+                    const violationEl = event.target.closest('[data-violation]');
+                    if (!violationEl) return;
+          
+                    // Get the text to display
+                    const tooltipText = violationEl.getAttribute('data-violation');
+                    tooltipEl.textContent = tooltipText;
+          
+                    // Temporarily show the tooltip so we can measure offsetWidth/offsetHeight
+                    tooltipEl.style.display = 'block';
+          
+                    // Get element bounding box
+                    const rect = violationEl.getBoundingClientRect();
+                    const tooltipRect = tooltipEl.getBoundingClientRect();
+          
+                    // Position above the element by default
+                    let top = rect.top - tooltipRect.height - 8;
+                    let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+          
+                    // If it goes off the top of the screen, place below instead
+                    if (top < 0) {
+                      top = rect.bottom + 8;
                     }
+          
+                    // If it goes off the left edge, clamp it
+                    if (left < 0) {
+                      left = 8;
+                    }
+                    // If it goes off the right edge, clamp it
+                    else if (left + tooltipRect.width > window.innerWidth) {
+                      left = window.innerWidth - tooltipRect.width - 8;
+                    }
+          
+                    tooltipEl.style.top = top + 'px';
+                    tooltipEl.style.left = left + 'px';
                   });
-                `;
+                })();
+              `;
                 document.body.appendChild(script);
             }
         }, violations);
@@ -204,7 +239,14 @@ export async function runComplianceCheck(url: string): Promise<string> {
         /<head>/i,
         `<head><base href="${url}" />`
     );
-
     await browser.close();
-    return modifiedHTML;
+    modifiedHTML = modifiedHTML.replace(
+        /<meta name="viewport".*?>/gi,
+        '<meta name="viewport" content="width=1200" />'
+    );
+    return {
+        modifiedHTML,
+        violations,
+    };
+
 }
