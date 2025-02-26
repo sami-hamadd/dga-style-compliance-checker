@@ -20,8 +20,8 @@ export default function HomePage() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        paddingTop: "80px",
-        paddingBottom: "80px",
+        paddingTop: "30px",
+        paddingBottom: "30px",
       }}
     >
       <InputForm onSubmit={handleCheckCompliance} />

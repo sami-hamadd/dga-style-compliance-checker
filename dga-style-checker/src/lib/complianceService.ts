@@ -143,8 +143,8 @@ export async function runComplianceCheck(url: string): Promise<{
                 tooltipEl.style.padding = '4px 6px';
                 tooltipEl.style.fontSize = '12px';
                 tooltipEl.style.borderRadius = '4px';
-                tooltipEl.style.pointerEvents = 'none'; // let mouse go “through”
-                tooltipEl.style.zIndex = '999999';      // on top of everything
+                tooltipEl.style.pointerEvents = 'none';
+                tooltipEl.style.zIndex = '999999';
                 document.body.appendChild(tooltipEl);
             }
 
@@ -171,10 +171,6 @@ export async function runComplianceCheck(url: string): Promise<{
                 }
             });
 
-            // Use a single mouseover listener that:
-            // 1) Hides the tooltip by default
-            // 2) Finds the nearest [data-violation] element
-            // 3) Positions the tooltip so it’s visible
             const scriptId = 'violation-tooltip-script';
             if (!document.getElementById(scriptId)) {
                 const script = document.createElement('script');
