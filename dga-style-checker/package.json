@@ -9,13 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@mantine/charts": "^7.17.0",
     "@mantine/core": "^7.17.0",
     "@mantine/hooks": "^7.17.0",
     "@tabler/icons-react": "^3.30.0",
     "next": "15.1.7",
     "puppeteer": "^24.2.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
