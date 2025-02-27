@@ -18,10 +18,10 @@ function ChartTooltip({ label, payload }: ChartTooltipProps) {
             <Text fw={500} mb={5}>
                 {label}
             </Text>
-            <Text c="blue" fz="sm">
+            <Text c="red" fz="sm" fw={500}>
                 Violations: {data["Number of Violations"]}
             </Text>
-            <Text c="green" fz="sm">
+            <Text c="#008141" fz="sm" fw={500}>
                 Compliance: {data["Compliance Percentage"].toFixed(2)}%
             </Text>
         </Paper>
