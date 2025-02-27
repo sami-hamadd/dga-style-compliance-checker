@@ -1,4 +1,19 @@
-export function PreviewFrame({ htmlContent }: { htmlContent: string }) {
+interface DeviceDimensions {
+    width: number;
+    height: number;
+}
+
+export function PreviewFrame({
+    htmlContent,
+    deviceDimensions,
+}: {
+    htmlContent: string;
+    deviceDimensions?: DeviceDimensions | null;
+}) {
+    // Determine width/height based on selection
+    const containerWidth = deviceDimensions ? `${deviceDimensions.width}px` : "100%";
+    const containerHeight = deviceDimensions ? `${deviceDimensions.height}px` : "80vh";
+
     return (
         <div
             style={{
@@ -17,8 +32,8 @@ export function PreviewFrame({ htmlContent }: { htmlContent: string }) {
                     overflow: "auto",
                     overflowX: "hidden",
                     overflowY: "hidden",
-                    width: "80%",
-                    height: "70vh",
+                    width: containerWidth,
+                    height: containerHeight,
                     border: "1px solid #ccc",
                     boxSizing: "border-box",
                     minWidth: "300px",
