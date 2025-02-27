@@ -13,11 +13,12 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-        const { modifiedHTML, violations } = await runComplianceCheck(url);
+        const { modifiedHTML, violations, totals } = await runComplianceCheck(url);
 
         return NextResponse.json({
             result: modifiedHTML,
             violations,
+            totals
         });
     } catch (error) {
         console.error("Compliance check failed:", error);

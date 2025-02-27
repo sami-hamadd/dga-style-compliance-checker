@@ -1,17 +1,38 @@
+//dga-style-checker\src\app\components\ComplianceResult.tsx
 "use client";
 
-import { Card, Text } from "@mantine/core";
+import { Card, Center, Paper, Text } from "@mantine/core";
 import { useComplianceScan } from "../hooks/useComplianceScan";
 import { LoadingIndicator } from "../components/LoadingIndicator";
-import { ViolationReport } from "../components/ViolationReport";
+import { DownloadButton } from "./DownloadButton";
 import { PreviewFrame } from "../components/PreviewFrame";
+import { countViolations } from "@/lib/aggregation";
+import ViolationChart from "@/app/components/ViolationChart";
+import ComplianceIndicator from "./ComplianceIndicator";
 
 function ComplianceResult({ url }: { url: string }) {
-    const { htmlContent, violations, isLoading } = useComplianceScan(url);
+    const { htmlContent, violations, totals, isLoading } = useComplianceScan(url);
+    const violationsCount = countViolations(violations, totals);
+
+    const totalViolations = violations.reduce((acc, item) => {
+        return acc + Object.keys(item.violations).length;
+    }, 0);
+
+    const totalCheckedElements = totals.color + totals.backgroundColor + totals.fontFamily;
+
+    // Edge-case: avoid division by zero
+    let complianceScore = 100;
+    if (totalCheckedElements > 0) {
+        complianceScore = (1 - totalViolations / totalCheckedElements) * 100;
+    }
+
+    // Making sure that the final compliance is between 0 and 100
+    complianceScore = Math.max(0, Math.min(100, complianceScore));
+
 
     return (
         <Card
-            w="80%"
+            w="90%"
             mt="md"
             p="md"
             bg="white"
@@ -25,11 +46,31 @@ function ComplianceResult({ url }: { url: string }) {
                 <LoadingIndicator url={url} />
             ) : htmlContent ? (
                 <>
-                    <ViolationReport url={url} violations={violations} />
+
                     <Text size="sm" ta="center" c="dimmed" mb="xs">
                         Note: You can resize the preview below by dragging its corner.
                     </Text>
-                    <PreviewFrame htmlContent={htmlContent} />
+                    <Paper withBorder p="xl" mb='sm' shadow="0">
+                        <Text ta="center">Overall Compliance Score</Text>
+                        <Center>
+                            <ComplianceIndicator value={complianceScore} />
+                        </Center>
+                    </Paper>
+                    <Paper withBorder p="xl" mb='sm' shadow="0">
+                        <Text ta="center" mb='md'>Compliance Score Breakdown</Text>
+                        <Center>
+                            <ViolationChart violationCounts={violationsCount} url={url} />
+                        </Center>
+                    </Paper>
+                    <Paper withBorder p="xl" shadow="0">
+
+                        <Text ta="center" mb='md'>Compliance Score Breakdown</Text>
+                        <DownloadButton
+                            url={url}
+                            violations={violations}
+                        />
+                        <PreviewFrame htmlContent={htmlContent} />
+                    </Paper>
                 </>
             ) : (
                 <Text>No results found</Text>
