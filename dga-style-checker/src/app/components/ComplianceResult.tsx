@@ -47,9 +47,6 @@ function ComplianceResult({ url }: { url: string }) {
             ) : htmlContent ? (
                 <>
 
-                    <Text size="sm" ta="center" c="dimmed" mb="xs">
-                        Note: You can resize the preview below by dragging its corner.
-                    </Text>
                     <Paper withBorder p="xl" mb='sm' shadow="0">
                         <Text ta="center">Overall Compliance Score</Text>
                         <Center>
@@ -64,7 +61,10 @@ function ComplianceResult({ url }: { url: string }) {
                     </Paper>
                     <Paper withBorder p="xl" shadow="0">
 
-                        <Text ta="center" mb='md'>Compliance Score Breakdown</Text>
+                        <Text ta="center">Compliance Score Breakdown</Text>
+                        <Text size="sm" ta="center" c="dimmed">
+                            Note: Resize the preview by dragging its bottom right corner.
+                        </Text>
                         <DownloadButton
                             url={url}
                             violations={violations}
