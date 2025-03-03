@@ -3,6 +3,7 @@ interface ViolationItem {
     className: string;
     textContent: string;
     violations: Record<string, string>;
+    suggestions?: Record<string, string>; // Include suggestions
 }
 
 export function useDownloadReport(url: string, violations: ViolationItem[]) {
@@ -15,12 +16,22 @@ export function useDownloadReport(url: string, violations: ViolationItem[]) {
         const lines: string[] = [`Color & Font Compliance Report for: ${url}`, ""];
 
         violations.forEach((violation, index) => {
-            const { tagName, className, textContent, violations: vMap } = violation;
+            const { tagName, className, textContent, violations: vMap, suggestions } = violation;
             lines.push(`${index + 1}. Violation Found: <${tagName} class="${className}"> "${textContent}"`);
+
             for (const [key, value] of Object.entries(vMap)) {
                 lines.push(`   - ❌ ${key}: ${value}`);
             }
-            lines.push("");
+
+            // Add recommendations if available
+            if (suggestions && Object.keys(suggestions).length > 0) {
+                lines.push("   🔹 Suggested Fixes:");
+                for (const [key, value] of Object.entries(suggestions)) {
+                    lines.push(`       ✅ ${key}: ${value}`);
+                }
+            }
+
+            lines.push(""); // Add an empty line for readability
         });
 
         lines.push(`Total violations: ${violations.length}`);
