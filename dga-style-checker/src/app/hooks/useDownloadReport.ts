@@ -3,7 +3,7 @@ interface ViolationItem {
     className: string;
     textContent: string;
     violations: Record<string, string>;
-    suggestions?: Record<string, string>; // Include suggestions
+    suggestions?: Record<string, string>;
 }
 
 export function useDownloadReport(url: string, violations: ViolationItem[]) {
@@ -31,7 +31,7 @@ export function useDownloadReport(url: string, violations: ViolationItem[]) {
                 }
             }
 
-            lines.push(""); // Add an empty line for readability
+            lines.push("");
         });
 
         lines.push(`Total violations: ${violations.length}`);

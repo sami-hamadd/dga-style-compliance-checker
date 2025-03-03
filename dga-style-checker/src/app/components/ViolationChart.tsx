@@ -1,7 +1,7 @@
 import { BarChart } from "@mantine/charts";
 import { Button, Group, Paper, Stack, Text } from "@mantine/core";
 import { IconDownload } from "@tabler/icons-react";
-import { useDownloadCSV } from "../hooks/useDownloadCSV";
+import { useDownloadCSV } from "@/app/hooks/useDownloadCSV";
 
 interface ChartTooltipProps {
     label: string;

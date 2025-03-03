@@ -1,8 +1,7 @@
 //dga-style-checker\src\app\components\ViolationReport.tsx
-import { Button, Title, Group, Stack } from "@mantine/core";
+import { Button, Group, Stack } from "@mantine/core";
 import { IconDownload } from "@tabler/icons-react";
 import { useDownloadReport } from "@/app/hooks/useDownloadReport";
-import { useDownloadCSV } from "@/app/hooks/useDownloadCSV";
 
 interface ViolationItem {
     tagName: string;

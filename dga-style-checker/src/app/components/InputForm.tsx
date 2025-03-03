@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { TextInput, Button, Box, Card, Title, Notification } from "@mantine/core";
+import { TextInput, Button, Box, Card, Title } from "@mantine/core";
 
 interface InputFormProps {
     onSubmit: (url: string) => void;

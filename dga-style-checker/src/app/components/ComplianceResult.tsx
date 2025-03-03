@@ -4,8 +4,7 @@
 import { countViolations } from "@/lib/aggregation";
 import ViolationChart from "@/app/components/ViolationChart";
 import ComplianceIndicator from "./ComplianceIndicator";
-import { Card, Text, Select, Group, Title, Button, Paper, Center } from "@mantine/core";
-import { IconDownload } from "@tabler/icons-react";
+import { Card, Text, Select, Group, Title, Paper, Center } from "@mantine/core";
 import { useState } from "react";
 import { useComplianceScan } from "@/app/hooks/useComplianceScan";
 import { LoadingIndicator } from "@/app/components/LoadingIndicator";
