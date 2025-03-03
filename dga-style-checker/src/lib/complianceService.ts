@@ -1,40 +1,40 @@
 // src/lib/complianceService.ts
 
 import puppeteer from "puppeteer";
-import { ALLOWED_COLORS, ALLOWED_FONT_PATTERNS } from "@/config";
+// import { ALLOWED_COLORS, ALLOWED_FONT_PATTERNS } from "@/config";
 
-//
-// 1) Define allowed font sizes and corresponding line heights.
-//
-const ALLOWED_TEXT_SIZES = [
-    { fontSize: 72, lineHeight: 90 },
-    { fontSize: 60, lineHeight: 72 },
-    { fontSize: 48, lineHeight: 60 },
-    { fontSize: 36, lineHeight: 44 },
-    { fontSize: 30, lineHeight: 38 },
-    { fontSize: 24, lineHeight: 32 },
-    { fontSize: 20, lineHeight: 30 },
-    { fontSize: 18, lineHeight: 28 },
-    { fontSize: 16, lineHeight: 24 },
-    { fontSize: 14, lineHeight: 20 },
-    { fontSize: 12, lineHeight: 18 },
-    { fontSize: 10, lineHeight: 14 },
-];
+// //
+// // 1) Define allowed font sizes and corresponding line heights.
+// //
+// const ALLOWED_TEXT_SIZES = [
+//     { fontSize: 72, lineHeight: 90 },
+//     { fontSize: 60, lineHeight: 72 },
+//     { fontSize: 48, lineHeight: 60 },
+//     { fontSize: 36, lineHeight: 44 },
+//     { fontSize: 30, lineHeight: 38 },
+//     { fontSize: 24, lineHeight: 32 },
+//     { fontSize: 20, lineHeight: 30 },
+//     { fontSize: 18, lineHeight: 28 },
+//     { fontSize: 16, lineHeight: 24 },
+//     { fontSize: 14, lineHeight: 20 },
+//     { fontSize: 12, lineHeight: 18 },
+//     { fontSize: 10, lineHeight: 14 },
+// ];
 
-function findNearestAllowedSize(fontSize: number) {
-    // Find the allowed font size with minimal difference
-    let closest = ALLOWED_TEXT_SIZES[0];
-    let minDiff = Math.abs(fontSize - closest.fontSize);
+// function findNearestAllowedSize(fontSize: number) {
+//     // Find the allowed font size with minimal difference
+//     let closest = ALLOWED_TEXT_SIZES[0];
+//     let minDiff = Math.abs(fontSize - closest.fontSize);
 
-    for (const allowed of ALLOWED_TEXT_SIZES) {
-        const diff = Math.abs(fontSize - allowed.fontSize);
-        if (diff < minDiff) {
-            closest = allowed;
-            minDiff = diff;
-        }
-    }
-    return closest;
-}
+//     for (const allowed of ALLOWED_TEXT_SIZES) {
+//         const diff = Math.abs(fontSize - allowed.fontSize);
+//         if (diff < minDiff) {
+//             closest = allowed;
+//             minDiff = diff;
+//         }
+//     }
+//     return closest;
+// }
 
 // export async function runComplianceCheck(
 //     url: string

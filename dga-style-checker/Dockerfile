@@ -11,16 +11,22 @@ RUN apk add --no-cache \
     freetype \
     harfbuzz \
     ca-certificates \
-    ttf-freefont
+    ttf-freefont \
+    git \
+    curl
 
 # Set the Puppeteer environment variable to use system-installed Chrome
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_CACHE_DIR=/root/.cache/puppeteer
 
 # Copy package.json and package-lock.json
 COPY package.json package-lock.json ./
 
 # Install dependencies
 RUN npm install
+
+# Install Puppeteer's Chrome browser explicitly
+RUN npx puppeteer browsers install chrome
 
 # Copy the entire app to the container
 COPY . .
@@ -44,16 +50,23 @@ RUN apk add --no-cache \
     freetype \
     harfbuzz \
     ca-certificates \
-    ttf-freefont
+    ttf-freefont \
+    git \
+    curl
 
 # Set Puppeteer to use system-installed Chrome
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_CACHE_DIR=/root/.cache/puppeteer
 
 # Copy only necessary files from the builder stage
 COPY --from=builder /app/package.json /app/package-lock.json ./
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /root/.cache/puppeteer /root/.cache/puppeteer
+
+# Install Puppeteer's Chrome browser explicitly in the production container
+RUN npx puppeteer browsers install chrome
 
 # Set environment variable for production
 ENV NODE_ENV=production
