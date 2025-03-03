@@ -1,4 +1,12 @@
-export function countViolations(violations: any[], totals: Record<string, number>) {
+interface ViolationDetail {
+    [key: string]: number;
+}
+
+interface Violation {
+    violations: ViolationDetail;
+}
+
+export function countViolations(violations: Violation[], totals: Record<string, number>) {
     // Count violations by type
     const counts = violations.reduce((acc, violation) => {
         Object.keys(violation.violations).forEach((key) => {

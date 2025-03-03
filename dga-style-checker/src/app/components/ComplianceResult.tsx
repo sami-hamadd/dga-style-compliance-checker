@@ -41,7 +41,12 @@ const deviceDimensionsMap: Record<string, { width: number; height: number } | nu
 
 function ComplianceResult({ url }: { url: string }) {
     const { htmlContent, violations, totals, isLoading } = useComplianceScan(url);
-    const violationsCount = countViolations(violations, totals);
+    const formattedViolations = violations.map((violation) => ({
+        violations: Object.fromEntries(
+            Object.entries(violation.violations).map(([key, value]) => [key, Number(value)])
+        ),
+    }));
+    const violationsCount = countViolations(formattedViolations, totals);
     const [selectedDevice, setSelectedDevice] = useState("default");
     const selectedDeviceDimensions = deviceDimensionsMap[selectedDevice];
 
@@ -78,7 +83,7 @@ function ComplianceResult({ url }: { url: string }) {
                 <>
 
                     <Paper withBorder p="xl" mb='sm' shadow="0">
-                        <Title order={3} mb='sm' ta="center">Overall Compliance Score</Title>
+                        <Title order={3} mb='sm' ta="center">Overall Typography & Colors Compliance Score</Title>
                         <Center>
                             <ComplianceIndicator value={complianceScore} />
                         </Center>

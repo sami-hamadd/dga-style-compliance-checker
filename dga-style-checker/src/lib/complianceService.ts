@@ -67,23 +67,30 @@ export async function runComplianceCheck(
         await page.setViewport({ width: 1920, height: 1080, deviceScaleFactor: 1 });
         await page.goto(url, { waitUntil: "networkidle2", timeout: 60000 });
         await page.waitForSelector("body", { timeout: 60000 });
-    } catch (error: any) {
-        console.error(`Error loading page: ${error.message}`);
-        await browser.close();
-        throw new Error(`Error loading page: ${error.message}`);
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+
+            console.error(`Error loading page: ${error.message}`);
+            await browser.close();
+            throw new Error(`Error loading page: ${error.message}`);
+        } else {
+            console.error("Unknown error occurred while loading the page.");
+            await browser.close();
+            throw new Error("Unknown error occurred while loading the page.");
+        }
     }
 
     // Get all DOM elements
     const elements = await page.$$("*");
 
-    let violations: Array<{
+    const violations: Array<{
         tagName: string;
         className: string;
         textContent: string;
         violations: Record<string, string>;
         suggestions?: Record<string, string>; // place to store suggestions
     }> = [];
-    let totals: Record<string, number> = {
+    const totals: Record<string, number> = {
         color: 0,
         backgroundColor: 0,
         fontFamily: 0,
@@ -133,8 +140,8 @@ export async function runComplianceCheck(
     // 4) Check for color, background, border, fontFamily, fontSize, lineHeight
     //
     visibleElements.forEach((el) => {
-        let elementViolations: Record<string, string> = {};
-        let elementSuggestions: Record<string, string> = {};
+        const elementViolations: Record<string, string> = {};
+        const elementSuggestions: Record<string, string> = {};
         if (el.color) totals.color++;
         if (el.backgroundColor) totals.backgroundColor++;
         if (el.fontFamily) totals.fontFamily++;
