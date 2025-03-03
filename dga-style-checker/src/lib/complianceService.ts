@@ -449,7 +449,7 @@ export async function runComplianceCheck(url: string) {
     const browser = await puppeteer.launch({
         headless: true,
         protocolTimeout: 120000,
-        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", '--disable-gpu',],
     });
 
     console.log("✅ Browser launched.");
