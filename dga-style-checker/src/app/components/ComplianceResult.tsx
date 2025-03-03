@@ -47,14 +47,23 @@ function ComplianceResult({ url }: { url: string }) {
         ),
     }));
     const violationsCount = countViolations(formattedViolations, totals);
+    console.log(totals)
     const [selectedDevice, setSelectedDevice] = useState("default");
     const selectedDeviceDimensions = deviceDimensionsMap[selectedDevice];
 
     const totalViolations = violations.reduce((acc, item) => {
-        return acc + Object.keys(item.violations).length;
+        // Instead of counting all keys, only count the keys
+        // that match the ones in `totals` (color, backgroundColor, fontFamily).
+        let violationCount = 0;
+        if (item.violations.color) violationCount++;
+        if (item.violations.backgroundColor) violationCount++;
+        if (item.violations.fontFamily) violationCount++;
+        if (item.violations.fontSize) violationCount++;
+        if (item.violations.lineHeight) violationCount++;
+        return acc + violationCount;
     }, 0);
 
-    const totalCheckedElements = totals.color + totals.backgroundColor + totals.fontFamily;
+    const totalCheckedElements = totals.color + totals.backgroundColor + totals.fontFamily + totals.fontSize + totals.lineHeight;
 
     // Edge-case: avoid division by zero
     let complianceScore = 100;
