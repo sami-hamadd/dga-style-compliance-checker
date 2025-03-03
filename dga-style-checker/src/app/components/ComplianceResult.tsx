@@ -9,7 +9,7 @@ import { useState } from "react";
 import { useComplianceScan } from "@/app/hooks/useComplianceScan";
 import { LoadingIndicator } from "@/app/components/LoadingIndicator";
 import { PreviewFrame } from "@/app/components/PreviewFrame";
-import { DownloadButton } from "./DownloadButton";
+import { DownloadButton } from "@/app/components/DownloadButton";
 
 const deviceOptions = [
     { label: "Default (PC)", value: "default" },
