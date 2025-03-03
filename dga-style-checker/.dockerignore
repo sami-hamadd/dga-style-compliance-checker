@@ -1,6 +1,5 @@
 # Ignore dependencies (they will be installed in the container)
 node_modules
-package-lock.json
 
 # Ignore Next.js build files (they will be rebuilt inside the container)
 .next
