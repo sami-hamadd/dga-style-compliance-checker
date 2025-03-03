@@ -3,7 +3,7 @@
 
 import { countViolations } from "@/lib/aggregation";
 import ViolationChart from "@/app/components/ViolationChart";
-import ComplianceIndicator from "./ComplianceIndicator";
+import ComplianceIndicator from "@/app/components/ComplianceIndicator";
 import { Card, Text, Select, Group, Title, Paper, Center } from "@mantine/core";
 import { useState } from "react";
 import { useComplianceScan } from "@/app/hooks/useComplianceScan";
