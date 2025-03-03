@@ -1,0 +1,36 @@
+# Ignore dependencies (they will be installed in the container)
+node_modules
+package-lock.json
+
+# Ignore Next.js build files (they will be rebuilt inside the container)
+.next
+out
+
+# Ignore environment files (they should be set via Cloud Run secrets or env vars)
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# Ignore Git and IDE/editor-specific files
+.git
+.gitignore
+.idea
+.vscode
+*.swp
+*.swo
+
+# Ignore logs and temp files
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.pnpm-debug.log
+.DS_Store
+Thumbs.db
+*.pid
+*.log
+
+# Ignore Docker-specific files
+Dockerfile
+.dockerignore
