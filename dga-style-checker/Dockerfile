@@ -4,13 +4,13 @@ FROM node:18-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json from the correct directory
+# Copy package.json and package-lock.json from the subdirectory
 COPY dga-style-checker/package.json dga-style-checker/package-lock.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy the entire app from the correct directory
+# Copy the entire app from the subdirectory
 COPY dga-style-checker/. .
 
 # Build the Next.js app
