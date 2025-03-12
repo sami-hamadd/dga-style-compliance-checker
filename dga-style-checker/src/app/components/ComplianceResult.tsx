@@ -63,10 +63,25 @@ function ComplianceResult({ url }: { url: string }) {
               if (item.violations.lineHeight) violationCount++;
               if (item.violations.boxShadow) violationCount++;
               if (item.violations.backdropFilter) violationCount++;
+              if (item.violations.width) violationCount++;
+              if (item.violations.spacing) violationCount++;
+              if (item.violations.paragraphWidth) violationCount++;
+              if (item.violations.breakpointsValidation) violationCount++;
               return acc + violationCount;
        }, 0);
 
-       const totalCheckedElements = totals.color + totals.backgroundColor + totals.fontFamily + totals.fontSize + totals.lineHeight + totals.boxShadow + totals.backdropFilter;
+       const totalCheckedElements =
+              totals.color +
+              totals.backgroundColor +
+              totals.fontFamily +
+              totals.fontSize +
+              totals.lineHeight +
+              totals.boxShadow +
+              totals.backdropFilter +
+              totals.spacing +
+              totals.paragraphWidth +
+              totals.breakpointsValidation +
+              totals.width;
 
        // Edge-case: avoid division by zero
        let complianceScore = 100;
@@ -106,7 +121,13 @@ function ComplianceResult({ url }: { url: string }) {
                                           <Group justify="space-between" m="lg">
                                                  <Group>
                                                         <Text>Select device size:</Text>
-                                                        <Select data={deviceOptions} value={selectedDevice} onChange={(value) => setSelectedDevice(value!)} placeholder="Select device size" style={{ width: 200 }} />
+                                                        <Select
+                                                               data={deviceOptions}
+                                                               value={selectedDevice}
+                                                               onChange={(value) => setSelectedDevice(value!)}
+                                                               placeholder="Select device size"
+                                                               style={{ width: 200 }}
+                                                        />
                                                  </Group>
 
                                                  <DownloadButton url={url} violations={violations} />

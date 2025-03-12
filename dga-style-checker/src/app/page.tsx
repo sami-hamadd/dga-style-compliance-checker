@@ -7,25 +7,25 @@ import InputForm from "@/app/components/InputForm";
 import ComplianceResult from "@/app/components/ComplianceResult";
 
 export default function HomePage() {
-  const [url, setUrl] = useState("");
+       const [url, setUrl] = useState("");
 
-  const handleCheckCompliance = (inputUrl: string) => {
-    setUrl(inputUrl);
-  };
+       const handleCheckCompliance = (inputUrl: string) => {
+              setUrl(inputUrl + "?force_refresh=" + Math.random());
+       };
 
-  return (
-    <Container
-      fluid
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        paddingTop: "30px",
-        paddingBottom: "30px",
-      }}
-    >
-      <InputForm onSubmit={handleCheckCompliance} />
-      {url && <ComplianceResult url={url} />}
-    </Container>
-  );
+       return (
+              <Container
+                     fluid
+                     style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            paddingTop: "30px",
+                            paddingBottom: "30px",
+                     }}
+              >
+                     <InputForm onSubmit={handleCheckCompliance} />
+                     {url && <ComplianceResult url={url} />}
+              </Container>
+       );
 }
