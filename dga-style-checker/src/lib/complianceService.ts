@@ -176,17 +176,16 @@ export async function runComplianceCheck(url: string): Promise<{
               // Check width
               const ParagraphMaxWidthValidation = validateParagraphMaxWidth(el);
               totals.paragraphWidth++;
-              console.log(ParagraphMaxWidthValidation);
               if (ParagraphMaxWidthValidation?.status === false) {
                      elementViolations.paragraphWidth = ParagraphMaxWidthValidation.message;
                      elementSuggestions.paragraphWidth = ParagraphMaxWidthValidation.closestMatch + "";
               }
 
               // Check width
-              /*  const breakpointsValidation = validateBreakpoints(el);
+              /*     const breakpointsValidation = validateBreakpoints(el);
               totals.breakpointsValidation++;
 
-              if (!breakpointsValidation?.status === false) {
+              if (breakpointsValidation?.status === false) {
                      elementViolations.breakpoints = breakpointsValidation?.message;
                      elementSuggestions.breakpoints = breakpointsValidation.closestMatch + "";
               } */
@@ -507,7 +506,7 @@ export async function runComplianceCheck(url: string): Promise<{
 
               return { status: true, message: "Correct paragraph max-width", closestMatch: 0 };
        }
-       function validateBreakpoints(el: IEvaluatedElement) {
+       /*       function validateBreakpoints(el: IEvaluatedElement) {
               if (["html", "body", "head", "meta", "title", "link", "style"].includes(el.tagName)) return;
 
               const elementWidth = Math.round(el.width);
@@ -525,7 +524,7 @@ export async function runComplianceCheck(url: string): Promise<{
               }
 
               return { status: true, message: "Correct breakpoint", closestMatch: 0 };
-       }
+       } */
 
        /* *********************************************************************************** */
 

@@ -70,10 +70,10 @@ RUN npx puppeteer browsers install chrome
 
 # Set environment variable for production
 ENV NODE_ENV=production
-ENV PORT=8080
+ENV PORT=3000
 
 # Expose port for Cloud Run
-EXPOSE 8080
+EXPOSE 3000
 
 # Start the Next.js application
-CMD ["node", "node_modules/.bin/next", "start", "-p", "8080"]
+CMD ["node", "node_modules/.bin/next", "start", "-p", "3000"]
