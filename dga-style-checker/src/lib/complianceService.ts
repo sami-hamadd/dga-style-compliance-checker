@@ -1,7 +1,7 @@
 // src/lib/complianceService.ts
 
 import puppeteer from "puppeteer";
-import { ALLOWED_COLORS, ALLOWED_ELEVATION_CONFIG, ALLOWED_FONT_PATTERNS } from "@/config";
+import { ALLOWED_COLORS, ALLOWED_ELEVATION_CONFIG, ALLOWED_FONT_PATTERNS, ALLOWED_LAYOUT_CONFIG } from "@/config";
 
 //
 // 1) Define allowed font sizes and corresponding line heights.
@@ -34,6 +34,13 @@ interface IEvaluatedElement {
        fontSize: string;
        lineHeight: string;
        boxShadow: string;
+       parentClass: string;
+       height: number;
+       top: number;
+       left: number;
+       width: number;
+       bottom: number;
+       right: number;
 }
 function findNearestAllowedSize(fontSize: number) {
        // Find the allowed font size with minimal difference
@@ -87,7 +94,19 @@ export async function runComplianceCheck(url: string): Promise<{
 
        const violations: Array<{ tagName: string; className: string; textContent: string; violations: Record<string, string>; suggestions?: Record<string, string> }> = [];
 
-       const totals: Record<string, number> = { color: 0, backgroundColor: 0, fontFamily: 0, lineHeight: 0, fontSize: 0, boxShadow: 0, backdropFilter: 0 };
+       const totals: Record<string, number> = {
+              color: 0,
+              backgroundColor: 0,
+              fontFamily: 0,
+              lineHeight: 0,
+              fontSize: 0,
+              boxShadow: 0,
+              backdropFilter: 0,
+              spacing: 0,
+              paragraphWidth: 0,
+              breakpointsValidation: 0,
+              width: 0,
+       };
        //
        // 2) Extract relevant style info from each element
        //
@@ -99,6 +118,8 @@ export async function runComplianceCheck(url: string): Promise<{
                             if ("innerText" in el && typeof (el as HTMLElement).innerText === "string") {
                                    textContent = (el as HTMLElement).innerText.trim().substring(0, 50);
                             }
+                            const rect = el.getBoundingClientRect();
+
                             return {
                                    tagName: el.tagName.toLowerCase(),
                                    className: el.getAttribute("class") || "no-class",
@@ -114,6 +135,13 @@ export async function runComplianceCheck(url: string): Promise<{
                                    lineHeight: computedStyle.lineHeight, // e.g. "24px" or "normal"
                                    boxShadow: computedStyle.boxShadow,
                                    backdropFilter: computedStyle.backdropFilter,
+                                   top: rect.top,
+                                   bottom: rect.bottom,
+                                   left: rect.left,
+                                   right: rect.right,
+                                   height: rect.height,
+                                   width: rect.width,
+                                   parentClass: el.parentElement?.getAttribute("class") || "no-parent",
                             };
                      }, element);
               }),
@@ -126,16 +154,61 @@ export async function runComplianceCheck(url: string): Promise<{
        //
        // 4) Check for color, background, border, fontFamily, fontSize, lineHeight
        //
-       visibleElements.forEach((el) => {
+
+       const allowedLayoutRules = {
+              allowedSpacing: Object.values(ALLOWED_LAYOUT_CONFIG.spacing).map((val) => parseInt(val.px)),
+              allowedWidth: Object.values(ALLOWED_LAYOUT_CONFIG.width).map((val) => parseInt(val.px)),
+              allowedContainerPaddings: Object.values(ALLOWED_LAYOUT_CONFIG.container).map((val) => parseInt(val.px)),
+              allowedParaMaxWih: Object.values(ALLOWED_LAYOUT_CONFIG.paragraph).map((val) => parseInt(val.px)),
+              allowedBreakPoints: Object.values(ALLOWED_LAYOUT_CONFIG.breakpoints).map((val) => parseInt(val)),
+       };
+       for (let i = 0; i < visibleElements.length; i++) {
+              const el = visibleElements[i];
+              const el2 = visibleElements[i + 1];
+
               const elementViolations: Record<string, string> = {};
               const elementSuggestions: Record<string, string> = {};
-              const elementShadows: Record<string, string> = {};
               if (el.color) totals.color++;
               if (el.backgroundColor) totals.backgroundColor++;
               if (el.fontFamily) totals.fontFamily++;
               if (el.lineHeight) totals.lineHeight++;
               if (el.fontSize) totals.fontSize++;
+              // Check width
+              const ParagraphMaxWidthValidation = validateParagraphMaxWidth(el);
+              totals.paragraphWidth++;
+              if (ParagraphMaxWidthValidation?.status === false) {
+                     elementViolations.paragraphWidth = ParagraphMaxWidthValidation.message;
+                     elementSuggestions.paragraphWidth = ParagraphMaxWidthValidation.closestMatch + "";
+              }
 
+              // Check width
+              /*     const breakpointsValidation = validateBreakpoints(el);
+              totals.breakpointsValidation++;
+
+              if (breakpointsValidation?.status === false) {
+                     elementViolations.breakpoints = breakpointsValidation?.message;
+                     elementSuggestions.breakpoints = breakpointsValidation.closestMatch + "";
+              } */
+              // Check width
+              const widthValidation = validateWidth(el);
+              if (el?.width) {
+                     totals.width++;
+                     if (widthValidation?.status === false) {
+                            elementViolations.width = widthValidation.message;
+                            elementSuggestions.width = widthValidation.closestMatch + "";
+                     }
+              }
+
+              //check spacing
+              if (el && el2) {
+                     const spacingValidation = validateSpacing(el, el2);
+                     totals.spacing++;
+                     if (spacingValidation) {
+                            elementViolations.spacing = spacingValidation.message;
+                            elementSuggestions.spacing = spacingValidation.closestMatch + "";
+                     }
+              }
+              // Check boxShadow
               if (el?.boxShadow !== "none") {
                      totals.boxShadow++;
                      const validElevations = checkElevations(el);
@@ -225,109 +298,6 @@ export async function runComplianceCheck(url: string): Promise<{
                      }
               }
 
-              /**
-               *  Analyzing Elevations and Shadows
-               */
-
-              function normalizeBoxShadow(shadow: string) {
-                     let parts: string | Array<string> = shadow.trim();
-
-                     // First split: separating different shadow definitions
-                     if (shadow.startsWith("rgba")) {
-                            parts = parts.split("px,");
-                            parts = parts.map((str, index) => (index === 0 && parts.length > 1 ? str + "px" : str));
-                     } else {
-                            parts = parts.split("),");
-                            parts = parts.map((str, index) => (index === 0 && parts.length > 1 ? str + ")" : str));
-                     }
-
-                     // Second split: ensuring RGBA stays together
-                     parts = parts.flatMap((str) => (str.trim().startsWith("rgba") ? [str.split(")")[0] + ")", str.split(")").slice(1).join(")")] : str.includes("rgba") ? ["rgba" + str.split("rgba")[1], str.split("rgba")[0]] : [str]));
-
-                     parts = parts
-                            .flat()
-                            .map((str) => str.trim())
-                            .filter(Boolean);
-                     return parts.sort().join(",");
-              }
-
-              //ALLOWED_ELEVATION_CONFIG
-              function checkElevations(el: IEvaluatedElement) {
-                     function findClosestBoxShadow(boxShadow: string): { key: string; allowedShadow: string; exactMatch: boolean } {
-                            const normalizedInput = normalizeBoxShadow(boxShadow);
-
-                            let closestMatch = { key: "", allowedShadow: "", exactMatch: false };
-                            let closestDistance = Infinity;
-                            let foundExactMatch = false;
-
-                            for (const [key, allowedShadow] of Object.entries(ALLOWED_ELEVATION_CONFIG.shadows)) {
-                                   const normalizedAllowed = normalizeBoxShadow(allowedShadow);
-
-                                   if (normalizedInput === normalizedAllowed) {
-                                          closestMatch = { key, allowedShadow, exactMatch: true };
-                                          foundExactMatch = true;
-                                          break; // Exits the loop early
-                                   }
-
-                                   const distance = levenshteinDistance(normalizedInput, normalizedAllowed);
-                                   if (distance < closestDistance) {
-                                          closestDistance = distance;
-                                          closestMatch = { key, allowedShadow, exactMatch: false };
-                                   }
-                            }
-
-                            if (!foundExactMatch && closestMatch.key === "") {
-                                   console.warn("⚠️ No close match found!");
-                            }
-
-                            return closestMatch;
-                     }
-
-                     // Function to compute Levenshtein Distance (string similarity)
-                     function levenshteinDistance(a: string, b: string) {
-                            const dp = Array(a.length + 1)
-                                   .fill(null)
-                                   .map(() => Array(b.length + 1).fill(null));
-
-                            for (let i = 0; i <= a.length; i++) dp[i][0] = i;
-                            for (let j = 0; j <= b.length; j++) dp[0][j] = j;
-
-                            for (let i = 1; i <= a.length; i++) {
-                                   for (let j = 1; j <= b.length; j++) {
-                                          const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-                                          dp[i][j] = Math.min(
-                                                 dp[i - 1][j] + 1, // Deletion
-                                                 dp[i][j - 1] + 1, // Insertion
-                                                 dp[i - 1][j - 1] + cost, // Substitution
-                                          );
-                                   }
-                            }
-                            return dp[a.length][b.length];
-                     }
-
-                     // Example Usage:
-                     const inputBoxShadow = el.boxShadow;
-                     const closestMatch = findClosestBoxShadow(inputBoxShadow);
-
-                     if (closestMatch.exactMatch) {
-                            // console.log(`✅ Exact match found: ${closestMatch.key} (${closestMatch.allowedShadow})`);
-                            return {
-                                   status: true,
-                                   message: `✅ Exact match found: ${closestMatch.key} (${closestMatch.allowedShadow})`,
-                                   closestMatch,
-                            };
-                     } else {
-                            // console.log(`⚠️ Closest match: ${closestMatch.key} (${closestMatch.allowedShadow})`);
-                            return {
-                                   status: false,
-                                   message: `⚠️ Closest match: ${closestMatch.key} (${closestMatch.allowedShadow})`,
-                                   closestMatch,
-                            };
-                     }
-              }
-
-              /* *********************************************************************************** */
-
               // If we have any violations, we push them to the array
               if (Object.keys(elementViolations).length > 0) {
                      // Only attach suggestions object if we actually have suggestions
@@ -350,7 +320,213 @@ export async function runComplianceCheck(url: string): Promise<{
 
                      violations.push(violationObj);
               }
-       });
+       }
+
+       /**
+        *  Analyzing Elevations , Shadows and spacing
+        */
+
+       function normalizeBoxShadow(shadow: string) {
+              let parts: string | Array<string> = shadow.trim();
+
+              // First split: separating different shadow definitions
+              if (shadow.startsWith("rgba")) {
+                     parts = parts.split("px,");
+                     parts = parts.map((str, index) => (index === 0 && parts.length > 1 ? str + "px" : str));
+              } else {
+                     parts = parts.split("),");
+                     parts = parts.map((str, index) => (index === 0 && parts.length > 1 ? str + ")" : str));
+              }
+
+              // Second split: ensuring RGBA stays together
+              parts = parts.flatMap((str) =>
+                     str.trim().startsWith("rgba")
+                            ? [str.split(")")[0] + ")", str.split(")").slice(1).join(")")]
+                            : str.includes("rgba")
+                            ? ["rgba" + str.split("rgba")[1], str.split("rgba")[0]]
+                            : [str],
+              );
+
+              parts = parts
+                     .flat()
+                     .map((str) => str.trim())
+                     .filter(Boolean);
+              return parts.sort().join(",");
+       }
+
+       function checkElevations(el: IEvaluatedElement) {
+              function findClosestBoxShadow(boxShadow: string): { key: string; allowedShadow: string; exactMatch: boolean } {
+                     const normalizedInput = normalizeBoxShadow(boxShadow);
+
+                     let closestMatch = { key: "", allowedShadow: "", exactMatch: false };
+                     let closestDistance = Infinity;
+                     let foundExactMatch = false;
+
+                     for (const [key, allowedShadow] of Object.entries(ALLOWED_ELEVATION_CONFIG.shadows)) {
+                            const normalizedAllowed = normalizeBoxShadow(allowedShadow);
+
+                            if (normalizedInput === normalizedAllowed) {
+                                   closestMatch = { key, allowedShadow, exactMatch: true };
+                                   foundExactMatch = true;
+                                   break; // Exits the loop early
+                            }
+
+                            const distance = levenshteinDistance(normalizedInput, normalizedAllowed);
+                            if (distance < closestDistance) {
+                                   closestDistance = distance;
+                                   closestMatch = { key, allowedShadow, exactMatch: false };
+                            }
+                     }
+
+                     if (!foundExactMatch && closestMatch.key === "") {
+                            console.warn("⚠️ No close match found!");
+                     }
+
+                     return closestMatch;
+              }
+
+              // Function to compute Levenshtein Distance (string similarity)
+              function levenshteinDistance(a: string, b: string) {
+                     const dp = Array(a.length + 1)
+                            .fill(null)
+                            .map(() => Array(b.length + 1).fill(null));
+
+                     for (let i = 0; i <= a.length; i++) dp[i][0] = i;
+                     for (let j = 0; j <= b.length; j++) dp[0][j] = j;
+
+                     for (let i = 1; i <= a.length; i++) {
+                            for (let j = 1; j <= b.length; j++) {
+                                   const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                                   dp[i][j] = Math.min(
+                                          dp[i - 1][j] + 1, // Deletion
+                                          dp[i][j - 1] + 1, // Insertion
+                                          dp[i - 1][j - 1] + cost, // Substitution
+                                   );
+                            }
+                     }
+                     return dp[a.length][b.length];
+              }
+
+              // Example Usage:
+              const inputBoxShadow = el.boxShadow;
+              const closestMatch = findClosestBoxShadow(inputBoxShadow);
+
+              if (closestMatch.exactMatch) {
+                     // console.log(`✅ Exact match found: ${closestMatch.key} (${closestMatch.allowedShadow})`);
+                     return {
+                            status: true,
+                            message: `✅ Exact match found: ${closestMatch.key} (${closestMatch.allowedShadow})`,
+                            closestMatch,
+                     };
+              } else {
+                     // console.log(`⚠️ Closest match: ${closestMatch.key} (${closestMatch.allowedShadow})`);
+                     return {
+                            status: false,
+                            message: `⚠️ Closest match: ${closestMatch.key} (${closestMatch.allowedShadow})`,
+                            closestMatch,
+                     };
+              }
+       }
+
+       function validateSpacing(el: IEvaluatedElement, el2: IEvaluatedElement) {
+              if (el.parentClass !== el2.parentClass) return;
+              const excludedTags = new Set(["html", "body", "head", "meta", "title", "link", "style"]);
+              if (excludedTags.has(el.tagName.toLowerCase()) || excludedTags.has(el2.tagName.toLowerCase())) return;
+
+              const isSameRow = Math.abs(el.top - el2.top) < el.height * 0.5;
+              const isSameColumn = Math.abs(el.left - el2.left) < el.width * 0.5;
+              const getClosetSpacing = (spacing: number) => {
+                     // Find the closest value in the array
+                     let closest = allowedLayoutRules.allowedSpacing[0];
+                     for (let i = 1; i < allowedLayoutRules.allowedSpacing.length; i++) {
+                            if (Math.abs(allowedLayoutRules.allowedSpacing[i] - spacing) < Math.abs(closest - spacing)) {
+                                   closest = allowedLayoutRules.allowedSpacing[i];
+                            }
+                     }
+
+                     return closest;
+              };
+              if (isSameColumn) {
+                     const verticalSpacing = Math.round(Math.abs(el2.top - el.bottom));
+                     if (!allowedLayoutRules.allowedSpacing.includes(verticalSpacing)) {
+                            return {
+                                   status: false,
+                                   message: `Incorrect vertical spacing (${verticalSpacing}px) between "${el.className}" and "${el2.className}" inside "${el.parentClass}"`,
+                                   closestMatch: getClosetSpacing(verticalSpacing),
+                            };
+                     }
+              }
+
+              if (isSameRow) {
+                     const horizontalSpacing = Math.round(Math.abs(el2.left - el.right));
+                     if (horizontalSpacing > 0 && !allowedLayoutRules.allowedSpacing.includes(horizontalSpacing)) {
+                            return {
+                                   status: false,
+                                   message: `Incorrect horizontal spacing (${horizontalSpacing}px) between "${el.className}" and "${el2.className}" inside "${el.parentClass}"`,
+                                   closestMatch: getClosetSpacing(horizontalSpacing),
+                            };
+                     }
+              }
+       }
+
+       function validateWidth(el: IEvaluatedElement) {
+              if (el.tagName === "p") return;
+
+              const elementWidth = Math.round(el.width);
+
+              const getClosestWidth = (width: number) => {
+                     return allowedLayoutRules.allowedWidth.reduce((closest, current) => (Math.abs(current - width) < Math.abs(closest - width) ? current : closest));
+              };
+
+              if (!allowedLayoutRules.allowedWidth.includes(elementWidth)) {
+                     return {
+                            status: false,
+                            message: `Incorrect width (${elementWidth}px) for "${el.className}"`,
+                            closestMatch: getClosestWidth(elementWidth),
+                     };
+              }
+              return { status: true, message: "Correct width", closestMatch: 0 };
+       }
+
+       function validateParagraphMaxWidth(el: IEvaluatedElement) {
+              if (el.tagName !== "p") return;
+              const paragraphWidth = Math.round(el.width);
+
+              const getClosestParaWidth = (width: number) => {
+                     return allowedLayoutRules.allowedParaMaxWih.reduce((closest, current) => (Math.abs(current - width) < Math.abs(closest - width) ? current : closest));
+              };
+
+              if (!allowedLayoutRules.allowedParaMaxWih.includes(paragraphWidth)) {
+                     return {
+                            status: false,
+                            message: `Incorrect paragraph max-width (${paragraphWidth}px) for "${el.className}"`,
+                            closestMatch: getClosestParaWidth(paragraphWidth),
+                     };
+              }
+
+              return { status: true, message: "Correct paragraph max-width", closestMatch: 0 };
+       }
+       /*       function validateBreakpoints(el: IEvaluatedElement) {
+              if (["html", "body", "head", "meta", "title", "link", "style"].includes(el.tagName)) return;
+
+              const elementWidth = Math.round(el.width);
+
+              const getClosestBreakpoint = (width: number) => {
+                     return allowedLayoutRules.allowedBreakPoints.reduce((closest, current) => (Math.abs(current - width) < Math.abs(closest - width) ? current : closest));
+              };
+
+              if (!allowedLayoutRules.allowedBreakPoints.includes(elementWidth)) {
+                     return {
+                            status: false,
+                            message: `Element "${el.className}" does not match any allowed breakpoints (${elementWidth}px)`,
+                            closestMatch: getClosestBreakpoint(elementWidth),
+                     };
+              }
+
+              return { status: true, message: "Correct breakpoint", closestMatch: 0 };
+       } */
+
+       /* *********************************************************************************** */
 
        //
        // 6) If violations exist, inject highlights AND the two tooltips:

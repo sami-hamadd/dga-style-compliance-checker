@@ -120,3 +120,52 @@ export const ALLOWED_ELEVATION_CONFIG = {
               xl: "blur(40px)",
        },
 };
+
+export const ALLOWED_LAYOUT_CONFIG = {
+       spacing: {
+              none: { px: "0px", rem: "0rem" },
+              xxs: { px: "2px", rem: "0.125rem" },
+              xs: { px: "4px", rem: "0.25rem" },
+              sm: { px: "6px", rem: "0.375rem" },
+              md: { px: "8px", rem: "0.5rem" },
+              lg: { px: "12px", rem: "0.75rem" },
+              xl: { px: "16px", rem: "1rem" },
+              "2xl": { px: "20px", rem: "1.25rem" },
+              "3xl": { px: "24px", rem: "1.5rem" },
+              "4xl": { px: "32px", rem: "2rem" },
+              "5xl": { px: "40px", rem: "2.5rem" },
+              "6xl": { px: "48px", rem: "3rem" },
+              "7xl": { px: "64px", rem: "5rem" },
+              "8xl": { px: "80px", rem: "6rem" },
+              "9xl": { px: "96px", rem: "7rem" },
+              "10xl": { px: "128px", rem: "8rem" },
+              "11xl": { px: "160px", rem: "11rem" },
+       },
+       width: {
+              xxs: { px: "320px", rem: "20rem" },
+              xs: { px: "384px", rem: "24rem" },
+              sm: { px: "480px", rem: "30rem" },
+              md: { px: "560px", rem: "35rem" },
+              lg: { px: "640px", rem: "40rem" },
+              xl: { px: "768px", rem: "48rem" },
+              "2xl": { px: "1024px", rem: "64rem" },
+              "3xl": { px: "1280px", rem: "80rem" },
+              "4xl": { px: "1440px", rem: "90rem" },
+              "5xl": { px: "1600px", rem: "100rem" },
+              "6xl": { px: "1920px", rem: "120rem" },
+       },
+       container: {
+              paddingMobile: { px: "16px", rem: "1rem" },
+              paddingDesktop: { px: "32px", rem: "2rem" },
+              maxWidthDesktop: { px: "1280px", rem: "80rem" },
+       },
+       paragraph: {
+              maxWidth: { px: "720px", rem: "20rem" },
+       },
+       breakpoints: {
+              sm: "600px",
+              md: "960px",
+              lg: "1280px",
+              xl: "1280+",
+       },
+};
